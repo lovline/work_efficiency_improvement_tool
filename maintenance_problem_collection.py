@@ -152,14 +152,14 @@ ttk.Radiobutton(window, text='国内', value='0',  command=get_region, variable=
 ttk.Radiobutton(window, text='海外', value='1', command=get_region, variable=view_int_regin).\
             grid(row=current_rows, column=current_column + 2, padx=5, pady=12, sticky=tk.W)
 current_rows += 1
-ttk.Label(window, text='-- 选择其中一个路径添加问题 --', width=80).\
-            grid(row=current_rows, columnspan=3, sticky='w')
+ttk.Label(window, text='选择其中一个路径添加问题', width=80).\
+            grid(row=current_rows, columnspan=3, sticky=tk.W)
 
 index = 0
 current_rows += 1
 for question, question_type in questions_type_directory:
     ttk.Radiobutton(window, text=question, value=question_type, command=get_directory_choice, variable=view_int_choice).\
-            grid(row=current_rows, column=current_column + index, padx=5, pady=2, sticky='w')
+            grid(row=current_rows, column=current_column + index, padx=5, pady=2, sticky=tk.E)
     index += 1
     if 2 == index:
         index = 0
@@ -193,10 +193,17 @@ numberChosen.grid(row=current_rows, column=1, sticky=tk.W)      # 设置其在�
 numberChosen.current(0)    # 设置下拉列表默认显示的值，0为 numberChosen['values'] 的下标值
 
 current_rows += 1
-ttk.Label(window, text='共性案例写作').grid(row=current_rows, columnspan=3, padx=5, pady=2, sticky=tk.W)
+ttk.Label(window, text='').grid(row=current_rows, columnspan=3, sticky=tk.W)
 current_rows += 1
+ttk.Label(window, text='RFC操作录入').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
+view_string_rfc_written = tk.StringVar()
+ttk.Entry(window, textvariable=view_string_rfc_written, width=60).grid(row=current_rows, column=1, columnspan=2, sticky=tk.W)
+
+current_rows += 1
+ttk.Label(window, text='共性案例写作').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
 view_string_case_written = tk.StringVar()
-ttk.Entry(window, textvariable=view_string_case_written, width=60).grid(row=current_rows, columnspan=3, sticky=tk.W)
+ttk.Entry(window, textvariable=view_string_case_written, width=60).grid(row=current_rows, column=1, columnspan=2, sticky=tk.W)
+
 current_rows += 1
 view_int_is_quit = tk.IntVar()
 ttk.Radiobutton(window, text='执行一次就关闭（默认）', value='0',  command=get_is_quit, variable=view_int_is_quit).\
