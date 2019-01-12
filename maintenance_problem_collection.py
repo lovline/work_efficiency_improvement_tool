@@ -1,6 +1,7 @@
 import tkinter as tk, os, getpass, datetime, re, math
 from docx import Document
 import xlwt, xlrd, xlutils.copy
+from tkinter import ttk
 
 root_path = r'\\siarnd-fs\sia01\CNP_IMSCM_F\融合产品线维护部\1_NGN联合维护组项目文件夹\100 维护组\维护一组\37 现网保障&案例写作&问题记录'
 record_question = '问题录入，格式如：【陕西电信】【1137689】入局呼叫甄别失败问题'
@@ -16,6 +17,10 @@ creator_chinese = {
     'z00452218': '张伟',
     'z00381447': '周伟',
 }
+
+RTAC_names = [
+    '艾婧婧', '白雪天', '陈俊', '党青亮', '扈文聪', '胡夏', '李桂峰', '孙凡喜', '李槐', '刘江华', '戚小蕾', '徐苇', '徐有海', '张群'
+]
 
 questions_type_directory = [
     ('00 AGCF&SIP类问题归总', 0),
@@ -38,8 +43,15 @@ questions_type_directory = [
     ('共性问题案例写作', 17),
 ]
 
-def get_questions_description():
+
+def get_region():
     return view_string_question.get()
+
+def get_is_quit():
+    return view_int_is_quit.get()
+
+def get_questions_description():
+    return view_int_regin.get()
 
 def get_directory_choice():
     for index in range(len(questions_type_directory) + 1):
@@ -128,26 +140,73 @@ def start_create_and_open():
 
 window = tk.Tk()
 window.title('Problem Collection Tool')
-window.geometry('800x700')
+window.resizable(False, False)
+window.geometry('800x1000')
 
-view_int_choice, view_string_question = tk.IntVar() ,tk.StringVar()
-tk.Label(window, text='-- 选择其中一个路径添加问题 --', bg='gray', font=('blue', 15), fg='black').pack(anchor='w')
+current_rows, current_column = 0, 0
+view_int_regin, view_int_choice, view_string_question = tk.IntVar(), tk.IntVar(), tk.StringVar()
+view_string_site, view_string_icare = tk.StringVar(), tk.StringVar()
+ttk.Label(window, text='发生问题区域：').grid(row=0, padx=5, pady=12,sticky=tk.W)
+ttk.Radiobutton(window, text='国内', value='0',  command=get_region, variable=view_int_regin).\
+            grid(row=current_rows, column=current_column + 1, padx=5, pady=12, sticky=tk.W)
+ttk.Radiobutton(window, text='海外', value='1', command=get_region, variable=view_int_regin).\
+            grid(row=current_rows, column=current_column + 2, padx=5, pady=12, sticky=tk.W)
+current_rows += 1
+ttk.Label(window, text='-- 选择其中一个路径添加问题 --', width=80).\
+            grid(row=current_rows, columnspan=3, sticky='w')
+
+index = 0
+current_rows += 1
 for question, question_type in questions_type_directory:
-    tk.Radiobutton(window, text=question, value=question_type, command=get_directory_choice, variable=view_int_choice).pack(anchor='w')
+    ttk.Radiobutton(window, text=question, value=question_type, command=get_directory_choice, variable=view_int_choice).\
+            grid(row=current_rows, column=current_column + index, padx=5, pady=2, sticky='w')
+    index += 1
+    if 2 == index:
+        index = 0
+        current_rows += 1
 
-tk.Label(window, textvariable='', width='27').pack()
-label = tk.Label(window,
+current_rows += 1
+ttk.Label(window, text='').grid(row=current_rows, columnspan=3, sticky=tk.W)
+current_rows += 1
+label = ttk.Label(window,
     text=record_question,       # 标签的文字
-    bg='gray',                 # 背景颜色
-    font=('Arial', 10),         # 字体和字体大小
-    width=100, height=2          # 标签长宽
+    width=80,           # 标签长宽
     )
-label.pack()    # 固定窗口位置
-tk.Label(window, textvariable='', width='27').pack()
-tk.Entry(window, textvariable=view_string_question, width=100).pack()
-tk.Label(window, textvariable='', width='27').pack()
+label.grid(row=current_rows, columnspan=3)    # 固定窗口位置
+current_rows += 1
+ttk.Label(window, text='局点信息：').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
+ttk.Entry(window, textvariable=view_string_site, width=27).grid(row=current_rows, column=1, sticky=tk.W)
+current_rows += 1
+ttk.Label(window, text='icare单号：').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
+ttk.Entry(window, textvariable=view_string_icare, width=27).grid(row=current_rows, column=1, sticky=tk.W)
+current_rows += 1
+ttk.Label(window, text='问题描述：').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
+ttk.Entry(window, textvariable=view_string_question, width=50).grid(row=current_rows, column=1, columnspan=3, sticky=tk.W)
 
-tk.Button(window, text="create and open", height='2', width='20', font=('black', 12), command=start_create_and_open,
-           bg='#FFFAFA', fg='#4F4F4F', activebackground='white', relief='raised').pack()
+# 创建一个下拉列表
+current_rows += 1
+ttk.Label(window, text='RTAC人员：').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
+view_string_RTAC_names = tk.StringVar()
+numberChosen = ttk.Combobox(window, width=12, textvariable=view_string_RTAC_names)
+numberChosen['values'] = tuple(RTAC_names)     # 设置下拉列表的值
+numberChosen.grid(row=current_rows, column=1, sticky=tk.W)      # 设置其在界面中出现的位置
+numberChosen.current(0)    # 设置下拉列表默认显示的值，0为 numberChosen['values'] 的下标值
+
+current_rows += 1
+ttk.Label(window, text='共性案例写作').grid(row=current_rows, columnspan=3, padx=5, pady=2, sticky=tk.W)
+current_rows += 1
+view_string_case_written = tk.StringVar()
+ttk.Entry(window, textvariable=view_string_case_written, width=60).grid(row=current_rows, columnspan=3, sticky=tk.W)
+current_rows += 1
+view_int_is_quit = tk.IntVar()
+ttk.Radiobutton(window, text='执行一次就关闭（默认）', value='0',  command=get_is_quit, variable=view_int_is_quit).\
+            grid(row=current_rows, padx=5, pady=12, sticky=tk.W)
+ttk.Radiobutton(window, text='始终不关闭该软件', value='1', command=get_is_quit, variable=view_int_is_quit).\
+            grid(row=current_rows, column=current_column + 1, padx=5, pady=12, sticky=tk.W)
+current_rows += 1
+ttk.Label(window, text='').grid(row=current_rows, columnspan=3, sticky=tk.W)
+current_rows += 1
+tk.Button(window, text="create and open", width='80', font=('black', 12), command=start_create_and_open, bg='green').\
+    grid(row=current_rows, columnspan=3, sticky=tk.W)
 
 window.mainloop()
