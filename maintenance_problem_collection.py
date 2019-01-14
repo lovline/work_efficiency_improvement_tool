@@ -71,6 +71,15 @@ def get_rfc_description():
 def get_rfc_detail():
     return rfc_info.get(0.0, tk.END)
 
+def get_rfc_region():
+    return view_string_rfc_region.get()
+
+def get_rfc_site_info():
+    return view_string_rfc_site.get()
+
+def get_rfc_version():
+    return view_string_rfc_version.get()
+
 def get_case_written_description():
     return view_string_case_written.get()
 
@@ -82,47 +91,44 @@ def get_directory_choice():
         if view_int_choice.get() == index:
             return questions_type_directory[index][0]
 
-def write_question_to_excel(write_type, root_path, record_question, creator,  rfc_type, rfc_detail):
+def write_question_to_excel(write_type):
+    global root_path
+    creator = creator_chinese[getpass.getuser()]
+    region = get_region()
+    product_name = get_product_name()
+    site = get_site_information()
+    icare = get_icare_number()
+    question = get_questions_description()
+    rtac = get_RTAC_name()
+    question_detail = get_question_detail_info()
+    rfc_info = get_rfc_description()
+    rfc_detail = get_rfc_detail()
+    case_written = get_case_written_description()
+    date_time = datetime.datetime.now().strftime('%Y-%m-%d')
     record_excel_file_name = root_path + '\\' + '现网问题记录_录入的时候会自动填写.xls'
-    product_information = 'SoftX3000'
-    if re.match(r'SoftX3000|SX3000|SX|R010|R10|R011|R11', record_question, re.I):
-        product_information = 'SoftX3000'
-    elif re.match(r'UAC3000|UAC3.5|R003|UAC', record_question, re.I):
-        product_information = 'UAC3000'
-    elif re.match(r'uprotal', record_question, re.I):
-        product_information = 'Uportal'
-
     if 'rfc' == write_type:
-        pass
+        rfc_detail = get_rfc_detail()
+        if rfc_detail == '':
+            rfc_detail = rfc_info
+        # 打开xls格式的excel文件 #
+        excel_file = xlrd.open_workbook(filename=record_excel_file_name, formatting_info=True)
+        table = excel_file.sheet_by_name('RFC操作')
+        # 得到当前行和列，新增数据要从nrow + 1行写入 #
+        nrows = table.nrows
+        ncol = table.ncols
+        rfc_region = get_rfc_region()
+        rfc_site = get_rfc_site_info()
+        rfc_version = get_rfc_version()
+        write_result_info = [product_name, region, site, record_question]
+        tmp_excel_file = xlutils.copy.copy(excel_file)
+        tmp_table = tmp_excel_file.get_sheet(0)
+        for col in range(ncol):
+            tmp_table.write(nrows, col, write_result_info[col])
+        tmp_excel_file.save(record_excel_file_name)
     if 'question' == write_type:
         pass
 
-    region = get_region()
-    print(region)
-    product_name = get_product_name()
-    print(product_name)
-    site = get_site_information()
-    print(site)
-    icare = get_icare_number()
-    print(icare)
-    question = get_questions_description()
-    print(question)
-    rtac = get_RTAC_name()
-    print(rtac)
-    question_detail = get_question_detail_info()
-    print(question_detail)
-    rfc = get_rfc_description()
-    print(rfc)
-    rfc_detail = get_rfc_detail()
-    print(rfc_detail)
-    case_written = get_case_written_description()
-    print(case_written)
-    is_quit = get_is_quit()
-    print(is_quit)
-
-
     return
-
     region = '国内'
     is_public_flag = '否'
     question_state = 'OPEN'
@@ -135,7 +141,7 @@ def write_question_to_excel(write_type, root_path, record_question, creator,  rf
     site_information = record_question.split('】')[0].replace('【', '')
     if site_information == record_question:
         site_information = ''
-    date_time = datetime.datetime.now().strftime('%Y-%m-%d')
+
 
     # 打开xls格式的excel文件 #
     excel_file = xlrd.open_workbook(filename=record_excel_file_name, formatting_info=True)
@@ -152,23 +158,19 @@ def write_question_to_excel(write_type, root_path, record_question, creator,  rf
     tmp_excel_file.save(record_excel_file_name)
 
 def start_create_and_open():
-    # get user id #
+    global root_path
     creator = getpass.getuser()
     select_path = get_directory_choice()
     record_question = get_questions_description()
     rfc_type = get_rfc_description()
     case_written = get_case_written_description()
     month_str = datetime.datetime.now().strftime('%Y-%m-%d')
+    is_quit = get_is_quit()
     # month_str = now_time.replace('-', '_')
     if rfc_type is not '':
-        rfc_detail = get_rfc_detail()
-        if rfc_detail == '':
-            rfc_detail = rfc_type
         write_type = 'rfc'
-        write_question_to_excel(write_type, root_path, record_question, creator, rfc_type, rfc_detail)
-
-
-    elif case_written is not '':
+        write_question_to_excel(write_type)
+    if case_written is not '':
         # create a description document #
         document_name = '【' + creator_chinese[creator] + '】' + case_written + '_' + month_str + '.docx'
         # 打开文档
@@ -184,7 +186,7 @@ def start_create_and_open():
         error_msg = '\n作者【%s】在【%s】时间写了一个问题案例：%s' % (creator_chinese[creator], month_str, error_msg_path)
         with open('log.txt', 'a') as log_file:
             log_file.write(error_msg)
-    elif record_question is not '':
+    if record_question is not '':
         site_info = get_site_information()
         icare_number = get_icare_number()
         if site_info == '':
@@ -199,7 +201,8 @@ def start_create_and_open():
         # TODO os.makedirs(result_path)
         # open the directory #
         # TODO os.startfile(result_path)
-        write_question_to_excel(root_path, record_question, creator)
+        write_type = 'question'
+        write_question_to_excel(write_type)
         error_path_info = select_path + '\\'  + '【' + creator_chinese[creator] + '】' \
                       + '【' + site_info + '】' + '【' + icare_number + '】' + record_question + '_' + month_str
         error_msg = '\n【%s】在【%s】创建了一个问题文件夹： %s' % (creator_chinese[creator], month_str, error_path_info)
@@ -209,7 +212,9 @@ def start_create_and_open():
         error_msg = '\n据点信息 或 问题描述不能为空， 执行失败。'
         with open('log.txt', 'a') as log_file:
             log_file.write(error_msg)
-    window.quit()
+    # 默认记录一次就关闭窗口 #
+    if is_quit == '1':
+        window.quit()
 
 
 window = tk.Tk()
@@ -288,9 +293,18 @@ text_info.grid(row=current_rows, column=1, columnspan=2, sticky=tk.W)
 current_rows += 1
 ttk.Label(window, text='').grid(row=current_rows, columnspan=3, sticky=tk.W)
 current_rows += 1
+ttk.Label(window, text='RFC操作--国家').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
+ttk.Label(window, text='RFC操作--局点').grid(row=current_rows, column=1, padx=5, pady=2, sticky=tk.W)
+ttk.Label(window, text='RFC操作--版本').grid(row=current_rows, column=2, padx=5, pady=2, sticky=tk.W)
+current_rows += 1
+view_string_rfc_region, view_string_rfc_site, view_string_rfc_version = tk.StringVar(), tk.StringVar(), tk.StringVar()
+ttk.Entry(window, textvariable=view_string_rfc_region, width=12).grid(row=current_rows, column=0, sticky=tk.E)
+ttk.Entry(window, textvariable=view_string_rfc_site, width=12).grid(row=current_rows, column=1, sticky=tk.W)
+ttk.Entry(window, textvariable=view_string_rfc_version, width=30).grid(row=current_rows, column=2, sticky=tk.W)
+current_rows += 1
 ttk.Label(window, text='RFC操作类型录入').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
 view_string_rfc_written = tk.StringVar()
-ttk.Entry(window, textvariable=view_string_rfc_written, width=60).grid(row=current_rows, column=1, columnspan=2, sticky=tk.W)
+ttk.Entry(window, textvariable=view_string_rfc_written, width=12).grid(row=current_rows, column=1, columnspan=2, sticky=tk.W)
 current_rows += 1
 ttk.Label(window, text='RFC操作详细描述录入：').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
 rfc_info = tk.Text(window, height=5, width=60)
