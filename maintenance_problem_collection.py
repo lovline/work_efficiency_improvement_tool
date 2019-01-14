@@ -45,20 +45,44 @@ questions_type_directory = [
 
 
 def get_region():
+    return view_string_regin.get()
+
+def get_product_name():
+    return view_string_product.get()
+
+def get_site_information():
+    return view_string_site.get()
+
+def get_icare_number():
+    return view_string_icare.get()
+
+def get_RTAC_name():
+    return view_string_RTAC_names.get()
+
+def get_questions_description():
     return view_string_question.get()
+
+def get_question_detail_info():
+    return text_info.get(0.0, tk.END)
+
+def get_rfc_description():
+    return view_string_rfc_written.get()
+
+def get_rfc_detail():
+    return rfc_info.get(0.0, tk.END)
+
+def get_case_written_description():
+    return view_string_case_written.get()
 
 def get_is_quit():
     return view_int_is_quit.get()
-
-def get_questions_description():
-    return view_int_regin.get()
 
 def get_directory_choice():
     for index in range(len(questions_type_directory) + 1):
         if view_int_choice.get() == index:
             return questions_type_directory[index][0]
 
-def write_question_to_excel(root_path, record_question, creator):
+def write_question_to_excel(write_type, root_path, record_question, creator,  rfc_type, rfc_detail):
     record_excel_file_name = root_path + '\\' + '现网问题记录_录入的时候会自动填写.xls'
     product_information = 'SoftX3000'
     if re.match(r'SoftX3000|SX3000|SX|R010|R10|R011|R11', record_question, re.I):
@@ -67,6 +91,38 @@ def write_question_to_excel(root_path, record_question, creator):
         product_information = 'UAC3000'
     elif re.match(r'uprotal', record_question, re.I):
         product_information = 'Uportal'
+
+    if 'rfc' == write_type:
+        pass
+    if 'question' == write_type:
+        pass
+
+    region = get_region()
+    print(region)
+    product_name = get_product_name()
+    print(product_name)
+    site = get_site_information()
+    print(site)
+    icare = get_icare_number()
+    print(icare)
+    question = get_questions_description()
+    print(question)
+    rtac = get_RTAC_name()
+    print(rtac)
+    question_detail = get_question_detail_info()
+    print(question_detail)
+    rfc = get_rfc_description()
+    print(rfc)
+    rfc_detail = get_rfc_detail()
+    print(rfc_detail)
+    case_written = get_case_written_description()
+    print(case_written)
+    is_quit = get_is_quit()
+    print(is_quit)
+
+
+    return
+
     region = '国内'
     is_public_flag = '否'
     question_state = 'OPEN'
@@ -80,6 +136,7 @@ def write_question_to_excel(root_path, record_question, creator):
     if site_information == record_question:
         site_information = ''
     date_time = datetime.datetime.now().strftime('%Y-%m-%d')
+
     # 打开xls格式的excel文件 #
     excel_file = xlrd.open_workbook(filename=record_excel_file_name, formatting_info=True)
     table = excel_file.sheet_by_name('问题录入')
@@ -99,42 +156,59 @@ def start_create_and_open():
     creator = getpass.getuser()
     select_path = get_directory_choice()
     record_question = get_questions_description()
+    rfc_type = get_rfc_description()
+    case_written = get_case_written_description()
     month_str = datetime.datetime.now().strftime('%Y-%m-%d')
     # month_str = now_time.replace('-', '_')
-    if select_path == '共性问题案例写作':
-        if record_question == '':
-            # create a new document #
-            document_name = 'XXX案例分享' + '_' + creator + '_' + month_str + '.docx'
-        else:
-            # create a description document #
-            document_name = record_question + '_' + creator + '_' + month_str + '.docx'
+    if rfc_type is not '':
+        rfc_detail = get_rfc_detail()
+        if rfc_detail == '':
+            rfc_detail = rfc_type
+        write_type = 'rfc'
+        write_question_to_excel(write_type, root_path, record_question, creator, rfc_type, rfc_detail)
+
+
+    elif case_written is not '':
+        # create a description document #
+        document_name = '【' + creator_chinese[creator] + '】' + case_written + '_' + month_str + '.docx'
         # 打开文档
         document = Document(docx=os.path.join(os.getcwd(), 'default.docx'))
         # document = Document()
         document.add_paragraph('')
         # 保存文件 #
-        save_file_name = root_path + '\\' + select_path + '\\' + document_name
+        case_written_path = r'\\siarnd-fs\sia01\CNP_IMSCM_F\融合产品线维护部\1_NGN联合维护组项目文件夹\100 维护组\维护一组\37 现网保障&案例写作&问题记录\共性问题案例写作'
+        save_file_name = case_written_path + '\\' + document_name
         document.save(save_file_name)
-        os.startfile(root_path + '\\' + select_path)
-        error_msg = '在--【%s】--时间作者--【%s】--写了一个问题案例：【%s】。' % (month_str, creator_chinese[creator], save_file_name)
+        os.startfile(case_written_path)
+        error_msg_path = '共性问题案例写作\\' +  document_name
+        error_msg = '\n作者【%s】在【%s】时间写了一个问题案例：%s' % (creator_chinese[creator], month_str, error_msg_path)
         with open('log.txt', 'a') as log_file:
-            log_file.writelines(error_msg)
+            log_file.write(error_msg)
     elif record_question is not '':
-        # eg: 37 现网保障&案例写作&问题记录\09 号码甄别&变换类问题归总\【陕西电信】【SR 1137689】入局呼叫甄别失败问题_xxxxx_2019_xx_xx #
-        result_path = root_path + '\\' + select_path + '\\' + record_question + '_' + creator + '_' + month_str
+        site_info = get_site_information()
+        icare_number = get_icare_number()
+        if site_info == '':
+            site_info = 'xx'
+        if icare_number == '':
+            icare_number = 'xxxxx'
+        # eg: 37 现网保障&案例写作&问题记录\09 号码甄别&变换类问题归总\【刘伟】【陕西电信】【SR 1137689】入局呼叫甄别失败问题_xxxxx_2019_xx_xx #
+        result_path = root_path + '\\' + select_path + '\\'  + '【' + creator_chinese[creator] + '】' \
+                      + '【' + site_info + '】' + '【' + icare_number + '】' + record_question + '_' + month_str
         print(result_path)
         # create the directory #
-        os.makedirs(result_path)
+        # TODO os.makedirs(result_path)
         # open the directory #
-        os.startfile(result_path)
+        # TODO os.startfile(result_path)
         write_question_to_excel(root_path, record_question, creator)
-        error_msg = '在--【%s】--时间作者--【%s】--创建了一个问题文件夹：【%s】。' % (month_str, creator_chinese[creator], result_path)
+        error_path_info = select_path + '\\'  + '【' + creator_chinese[creator] + '】' \
+                      + '【' + site_info + '】' + '【' + icare_number + '】' + record_question + '_' + month_str
+        error_msg = '\n【%s】在【%s】创建了一个问题文件夹： %s' % (creator_chinese[creator], month_str, error_path_info)
         with open('log.txt', 'a') as log_file:
-            log_file.writelines(error_msg)
+            log_file.write(error_msg)
     else:
-        error_msg = '非案例写作的情况下问题描述不能为空'
+        error_msg = '\n据点信息 或 问题描述不能为空， 执行失败。'
         with open('log.txt', 'a') as log_file:
-            log_file.writelines(error_msg)
+            log_file.write(error_msg)
     window.quit()
 
 
@@ -144,17 +218,31 @@ window.resizable(False, False)
 window.geometry('800x1000')
 
 current_rows, current_column = 0, 0
-view_int_regin, view_int_choice, view_string_question = tk.IntVar(), tk.IntVar(), tk.StringVar()
+view_string_regin, view_int_choice, view_string_question = tk.StringVar(), tk.IntVar(), tk.StringVar()
 view_string_site, view_string_icare = tk.StringVar(), tk.StringVar()
-ttk.Label(window, text='发生问题区域：').grid(row=0, padx=5, pady=12,sticky=tk.W)
-ttk.Radiobutton(window, text='国内', value='0',  command=get_region, variable=view_int_regin).\
-            grid(row=current_rows, column=current_column + 1, padx=5, pady=12, sticky=tk.W)
-ttk.Radiobutton(window, text='海外', value='1', command=get_region, variable=view_int_regin).\
-            grid(row=current_rows, column=current_column + 2, padx=5, pady=12, sticky=tk.W)
+ttk.Label(window, text='发生问题区域：').grid(row=0, padx=5, pady=10, sticky=tk.W)
+view_string_regin.set('国内')
+ttk.Radiobutton(window, text='国内', value='国内',  command=get_region, variable=view_string_regin).\
+            grid(row=current_rows, column=current_column + 1, padx=5, sticky=tk.W)
+ttk.Radiobutton(window, text='海外', value='海外', command=get_region, variable=view_string_regin).\
+            grid(row=current_rows, column=current_column + 2, padx=5, sticky=tk.W)
+current_rows += 1
+view_string_product = tk.StringVar()
+view_string_product.set('SoftX3000')
+ttk.Label(window, text='产品名称：').grid(row=current_rows, padx=5, sticky=tk.W)
+current_rows += 1
+ttk.Radiobutton(window, text='SoftX3000', value='SoftX3000',  command=get_product_name, variable=view_string_product).\
+            grid(row=current_rows, column=current_column, padx=5, sticky=tk.W)
+ttk.Radiobutton(window, text='UAC3000', value='UAC3000', command=get_product_name, variable=view_string_product).\
+            grid(row=current_rows, column=current_column + 1, padx=5, sticky=tk.W)
+ttk.Radiobutton(window, text='Uportal', value='Uportal', command=get_product_name, variable=view_string_product).\
+            grid(row=current_rows, column=current_column + 2, padx=5, sticky=tk.W)
+current_rows += 1
+ttk.Label(window, text='').grid(row=current_rows, columnspan=3, sticky=tk.W)
+
 current_rows += 1
 ttk.Label(window, text='选择其中一个路径添加问题', width=80).\
             grid(row=current_rows, columnspan=3, sticky=tk.W)
-
 index = 0
 current_rows += 1
 for question, question_type in questions_type_directory:
@@ -191,14 +279,32 @@ numberChosen = ttk.Combobox(window, width=12, textvariable=view_string_RTAC_name
 numberChosen['values'] = tuple(RTAC_names)     # 设置下拉列表的值
 numberChosen.grid(row=current_rows, column=1, sticky=tk.W)      # 设置其在界面中出现的位置
 numberChosen.current(0)    # 设置下拉列表默认显示的值，0为 numberChosen['values'] 的下标值
+current_rows += 1
+ttk.Label(window, text='问题详细描述（选填）：').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
+text_info = tk.Text(window, height=5, width=50)
+# how to get Text context: text_info.get(0.0,tk.END) #
+text_info.grid(row=current_rows, column=1, columnspan=2, sticky=tk.W)
 
 current_rows += 1
 ttk.Label(window, text='').grid(row=current_rows, columnspan=3, sticky=tk.W)
 current_rows += 1
-ttk.Label(window, text='RFC操作录入').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
+ttk.Label(window, text='RFC操作类型录入').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
 view_string_rfc_written = tk.StringVar()
 ttk.Entry(window, textvariable=view_string_rfc_written, width=60).grid(row=current_rows, column=1, columnspan=2, sticky=tk.W)
+current_rows += 1
+ttk.Label(window, text='RFC操作详细描述录入：').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
+rfc_info = tk.Text(window, height=5, width=60)
+rfc_info.grid(row=current_rows, column=1, columnspan=2, sticky=tk.W)
+#  text.insert(index,string)  index = x.y的形式,x表示行，y表示列 #
+rfc_info.insert(6.0, """【操作内容】XXXXX
+【业务影响】无
+【实验室验证情况】无
+【应急预案】操作回退
+【风险描述】低
+【保障措施】RFC评审，电话值守""")
 
+current_rows += 1
+ttk.Label(window, text='').grid(row=current_rows, columnspan=3, sticky=tk.W)
 current_rows += 1
 ttk.Label(window, text='共性案例写作').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
 view_string_case_written = tk.StringVar()
@@ -206,9 +312,10 @@ ttk.Entry(window, textvariable=view_string_case_written, width=60).grid(row=curr
 
 current_rows += 1
 view_int_is_quit = tk.IntVar()
-ttk.Radiobutton(window, text='执行一次就关闭（默认）', value='0',  command=get_is_quit, variable=view_int_is_quit).\
+view_int_is_quit.set('1')
+ttk.Radiobutton(window, text='执行一次就关闭（默认）', value='1',  command=get_is_quit, variable=view_int_is_quit).\
             grid(row=current_rows, padx=5, pady=12, sticky=tk.W)
-ttk.Radiobutton(window, text='始终不关闭该软件', value='1', command=get_is_quit, variable=view_int_is_quit).\
+ttk.Radiobutton(window, text='始终不关闭该软件', value='0', command=get_is_quit, variable=view_int_is_quit).\
             grid(row=current_rows, column=current_column + 1, padx=5, pady=12, sticky=tk.W)
 current_rows += 1
 ttk.Label(window, text='').grid(row=current_rows, columnspan=3, sticky=tk.W)
