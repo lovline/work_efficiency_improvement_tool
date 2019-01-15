@@ -19,7 +19,11 @@ creator_chinese = {
 }
 
 RTAC_names = [
-    '艾婧婧', '白雪天', '陈俊', '党青亮', '扈文聪', '胡夏', '李桂峰', '孙凡喜', '李槐', '刘江华', '戚小蕾', '徐苇', '徐有海', '张群'
+    '请下拉选择', '艾婧婧', '白雪天', '陈俊', '党青亮', '扈文聪', '胡夏', '李桂峰', '孙凡喜', '李槐', '刘江华', '戚小蕾', '徐苇', '徐有海', '张群'
+]
+
+GTAC_names = [
+    '请下拉选择', '戴懿', '王智恒', '时璐', '刘喜辉', '倪峰', '杨柳', '郭金平', '黄言', '郑伟'
 ]
 
 questions_type_directory = [
@@ -64,6 +68,9 @@ def get_icare_number():
 
 def get_RTAC_name():
     return view_string_RTAC_names.get()
+
+def get_GTAC_name():
+    return view_string_GTAC_names.get()
 
 def get_questions_description():
     return view_string_question.get()
@@ -127,9 +134,14 @@ def write_question_to_excel(write_type):
         write_result_info = [rfc_product, rfc_region, rfc_site, rfc_version, rfc_type, rfc_detail, date_time, rfc_risk, rfc_dts, rfc_interface]
         tmp_excel_file = xlutils.copy.copy(excel_file)
         tmp_table = tmp_excel_file.get_sheet('RFC操作')
-        for col in range(ncol):
-            tmp_table.write(nrows, col, write_result_info[col])
-        tmp_excel_file.save(record_excel_file_name)
+        try:
+            for col in range(ncol):
+                tmp_table.write(nrows, col, write_result_info[col])
+            tmp_excel_file.save(record_excel_file_name)
+        except PermissionError:
+            error_msg = '\n【%s】在录入RFC操作时发生异常：现网问题记录_录入的时候会自动填写.xls文件正在处于编辑状态，录入RFC失败，请稍后手动录入' %rfc_interface
+            with open('log.txt', 'a') as log_file:
+                log_file.write(error_msg)
     if 'question' == write_type:
         region = get_region()
         product_name = get_product_name()
@@ -140,6 +152,13 @@ def write_question_to_excel(write_type):
         if question_detail == '':
             question_detail = question
         rtac_name = get_RTAC_name()
+        gtac_name = get_GTAC_name()
+        tmp_tac_name = rtac_name
+        if tmp_tac_name == '请下拉选择':
+            if gtac_name == '请下拉选择':
+                tmp_tac_name = ''
+            else:
+                tmp_tac_name = gtac_name
         is_public_flag = '否'
         question_state = 'OPEN'
         # 打开xls格式的excel文件 #
@@ -149,12 +168,18 @@ def write_question_to_excel(write_type):
         nrows = table.nrows
         ncol = table.ncols
         write_result_info = [nrows, date_time, product_name, region, site_info, question_detail, is_public_flag, creator,
-                             is_public_flag, question_state, icare_no, rtac_name, '']
+                             is_public_flag, question_state, icare_no, tmp_tac_name, '']
         tmp_excel_file = xlutils.copy.copy(excel_file)
         tmp_table = tmp_excel_file.get_sheet('问题录入')
-        for col in range(ncol):
-            tmp_table.write(nrows, col, write_result_info[col])
-        tmp_excel_file.save(record_excel_file_name)
+        try:
+            for col in range(ncol):
+                tmp_table.write(nrows, col, write_result_info[col])
+            tmp_excel_file.save(record_excel_file_name)
+        except PermissionError:
+            error_msg = '\n【%s】在录入现网问题时发生异常现网问题记录_录入的时候会自动填写.xls文件正在处于编辑状态，' \
+                        '录入问题失败，请稍后手动录入问题:%s' % (creator, question)
+            with open('log.txt', 'a') as log_file:
+                log_file.write(error_msg)
 
 def start_create_and_open():
     global root_path
@@ -200,26 +225,31 @@ def start_create_and_open():
         os.makedirs(result_path)
         # open the directory #
         os.startfile(result_path)
-        write_type = 'question'
-        write_question_to_excel(write_type)
         error_path_info = select_path + '\\'  + '【' + creator_chinese[creator] + '】' \
                       + '【' + site_info + '】' + '【' + icare_number + '】' + question + '_' + month_str
         error_msg = '\n【%s】在【%s】创建了一个问题文件夹： %s' % (creator_chinese[creator], month_str, error_path_info)
         with open('log.txt', 'a') as log_file:
             log_file.write(error_msg)
-    else:
-        error_msg = '\n据点信息 或 问题描述不能为空， 执行失败。'
-        with open('log.txt', 'a') as log_file:
-            log_file.write(error_msg)
+        write_type = 'question'
+        write_question_to_excel(write_type)
     # 默认记录一次就关闭窗口 #
     if is_quit == True:
         window.quit()
 
+def center_window(width, height):
+    # 获取屏幕 宽、高
+    ws = window.winfo_screenwidth()
+    hs = window.winfo_screenheight()
+    # 计算 x, y 位置
+    x = (ws/2) - (width/2)
+    y = (hs/2) - (height/2)
+    window.geometry('%dx%d+%d+%d' % (width, height, x, y-60))
 
 window = tk.Tk()
 window.title('Problem Collection Tool')
 window.resizable(False, False)
-window.geometry('800x1000')
+# window.geometry('800x950')
+center_window(800, 950)
 
 current_rows, current_column = 0, 0
 view_string_regin, view_int_choice, view_string_question = tk.StringVar(), tk.IntVar(), tk.StringVar()
@@ -284,10 +314,17 @@ ttk.Entry(window, textvariable=view_string_question, width=50).grid(row=current_
 current_rows += 1
 ttk.Label(window, text='RTAC人员：').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
 view_string_RTAC_names = tk.StringVar()
-numberChosen = ttk.Combobox(window, width=12, textvariable=view_string_RTAC_names)
+numberChosen = ttk.Combobox(window, width=13, textvariable=view_string_RTAC_names)
 numberChosen['values'] = tuple(RTAC_names)     # 设置下拉列表的值
 numberChosen.grid(row=current_rows, column=1, sticky=tk.W)      # 设置其在界面中出现的位置
 numberChosen.current(0)    # 设置下拉列表默认显示的值，0为 numberChosen['values'] 的下标值
+current_rows += 1
+ttk.Label(window, text='GTAC人员：').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
+view_string_GTAC_names = tk.StringVar()
+numberChosen = ttk.Combobox(window, width=13, textvariable=view_string_GTAC_names)
+numberChosen['values'] = tuple(GTAC_names)
+numberChosen.grid(row=current_rows, column=1, sticky=tk.W)
+numberChosen.current(0)
 current_rows += 1
 ttk.Label(window, text='问题详细描述（选填）：').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
 text_info = tk.Text(window, height=5, width=50)
@@ -340,8 +377,6 @@ ttk.Radiobutton(window, text='执行一次就关闭（默认）', value='1',  co
             grid(row=current_rows, padx=5, pady=12, sticky=tk.W)
 ttk.Radiobutton(window, text='始终不关闭该软件', value='0', command=get_is_quit, variable=view_int_is_quit).\
             grid(row=current_rows, column=current_column + 1, padx=5, pady=12, sticky=tk.W)
-current_rows += 1
-ttk.Label(window, text='').grid(row=current_rows, columnspan=3, sticky=tk.W)
 current_rows += 1
 tk.Button(window, text="create and open", width='80', font=('black', 12), command=start_create_and_open, bg='green').\
     grid(row=current_rows, columnspan=3, sticky=tk.W)
