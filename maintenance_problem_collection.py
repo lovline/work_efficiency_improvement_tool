@@ -27,7 +27,7 @@ questions_type_directory = [
     ('01 license类问题归总', 1),
     ('02 SOSM&ETSI&GB监听类问题归总', 2),
     ('03 SSF类问题归总', 3),
-    ('04 uportal类问题归总', 4),
+    ('04 OSG问题归总', 4),
     ('05 补充业务问题归总', 5),
     ('06 彩铃传真类问题归总', 6),
     ('07 网管类问题归总', 7),
@@ -40,7 +40,13 @@ questions_type_directory = [
     ('14 网关类问题归总', 14),
     ('15 消息跟踪类问题归总', 15),
     ('16 智能业务问题归总', 16),
-    ('共性问题案例写作', 17),
+    ('17 Uportal登录鉴权类问题', 17),
+    ('18 Uportal话单类问题', 18),
+    ('19 Uportal漏洞类问题', 19),
+    ('20 Uportal呼叫类问题', 20),
+    ('21 U-Path软终端问题归总', 21),
+    ('22 PMSI酒店接口机问题归总', 22),
+    ('23 CBS酒管系统问题归总', 23),
 ]
 
 
@@ -65,8 +71,14 @@ def get_questions_description():
 def get_question_detail_info():
     return text_info.get(0.0, tk.END)
 
-def get_rfc_description():
-    return view_string_rfc_written.get()
+def get_rfc_type():
+    return view_string_rfc_type.get()
+
+def get_rfc_product():
+    return view_string_rfc_product.get()
+
+def get_rfc_dts():
+    return view_string_rfc_dts.get()
 
 def get_rfc_detail():
     return rfc_info.get(0.0, tk.END)
@@ -101,27 +113,28 @@ def write_question_to_excel(write_type):
     question = get_questions_description()
     rtac = get_RTAC_name()
     question_detail = get_question_detail_info()
-    rfc_info = get_rfc_description()
-    rfc_detail = get_rfc_detail()
     case_written = get_case_written_description()
     date_time = datetime.datetime.now().strftime('%Y-%m-%d')
     record_excel_file_name = root_path + '\\' + '现网问题记录_录入的时候会自动填写.xls'
     if 'rfc' == write_type:
+        rfc_product = get_rfc_product()
+        rfc_region = get_rfc_region()
+        rfc_site = get_rfc_site_info()
+        rfc_version = get_rfc_version()
+        rfc_type = get_rfc_type()
         rfc_detail = get_rfc_detail()
-        if rfc_detail == '':
-            rfc_detail = rfc_info
+        rfc_risk = '低'
+        rfc_dts = get_rfc_dts()
+        rfc_interface = creator
         # 打开xls格式的excel文件 #
         excel_file = xlrd.open_workbook(filename=record_excel_file_name, formatting_info=True)
         table = excel_file.sheet_by_name('RFC操作')
         # 得到当前行和列，新增数据要从nrow + 1行写入 #
         nrows = table.nrows
         ncol = table.ncols
-        rfc_region = get_rfc_region()
-        rfc_site = get_rfc_site_info()
-        rfc_version = get_rfc_version()
-        write_result_info = [product_name, region, site, record_question]
+        write_result_info = [rfc_product, rfc_region, rfc_site, rfc_version, rfc_type, rfc_detail, date_time, rfc_risk, rfc_dts, rfc_interface]
         tmp_excel_file = xlutils.copy.copy(excel_file)
-        tmp_table = tmp_excel_file.get_sheet(0)
+        tmp_table = tmp_excel_file.get_sheet('RFC操作')
         for col in range(ncol):
             tmp_table.write(nrows, col, write_result_info[col])
         tmp_excel_file.save(record_excel_file_name)
@@ -162,12 +175,12 @@ def start_create_and_open():
     creator = getpass.getuser()
     select_path = get_directory_choice()
     record_question = get_questions_description()
-    rfc_type = get_rfc_description()
     case_written = get_case_written_description()
     month_str = datetime.datetime.now().strftime('%Y-%m-%d')
     is_quit = get_is_quit()
     # month_str = now_time.replace('-', '_')
-    if rfc_type is not '':
+    rfc_product = get_rfc_product()
+    if rfc_product is not '':
         write_type = 'rfc'
         write_question_to_excel(write_type)
     if case_written is not '':
@@ -213,7 +226,7 @@ def start_create_and_open():
         with open('log.txt', 'a') as log_file:
             log_file.write(error_msg)
     # 默认记录一次就关闭窗口 #
-    if is_quit == '1':
+    if is_quit == True:
         window.quit()
 
 
@@ -225,7 +238,7 @@ window.geometry('800x1000')
 current_rows, current_column = 0, 0
 view_string_regin, view_int_choice, view_string_question = tk.StringVar(), tk.IntVar(), tk.StringVar()
 view_string_site, view_string_icare = tk.StringVar(), tk.StringVar()
-ttk.Label(window, text='发生问题区域：').grid(row=0, padx=5, pady=10, sticky=tk.W)
+ttk.Label(window, text='发生问题区域：').grid(row=0, padx=5, pady=3, sticky=tk.W)
 view_string_regin.set('国内')
 ttk.Radiobutton(window, text='国内', value='国内',  command=get_region, variable=view_string_regin).\
             grid(row=current_rows, column=current_column + 1, padx=5, sticky=tk.W)
@@ -243,7 +256,12 @@ ttk.Radiobutton(window, text='UAC3000', value='UAC3000', command=get_product_nam
 ttk.Radiobutton(window, text='Uportal', value='Uportal', command=get_product_name, variable=view_string_product).\
             grid(row=current_rows, column=current_column + 2, padx=5, sticky=tk.W)
 current_rows += 1
-ttk.Label(window, text='').grid(row=current_rows, columnspan=3, sticky=tk.W)
+ttk.Radiobutton(window, text='U-Path软终端', value='U-Path软终端',  command=get_product_name, variable=view_string_product).\
+            grid(row=current_rows, column=current_column, padx=5, sticky=tk.W)
+ttk.Radiobutton(window, text='PMSI酒店接口机', value='PMSI酒店接口机', command=get_product_name, variable=view_string_product).\
+            grid(row=current_rows, column=current_column + 1, padx=5, sticky=tk.W)
+ttk.Radiobutton(window, text='CBS酒管系统&OSG', value='CBS酒管系统&OSG', command=get_product_name, variable=view_string_product).\
+            grid(row=current_rows, column=current_column + 2, padx=5, sticky=tk.W)
 
 current_rows += 1
 ttk.Label(window, text='选择其中一个路径添加问题', width=80).\
@@ -254,7 +272,7 @@ for question, question_type in questions_type_directory:
     ttk.Radiobutton(window, text=question, value=question_type, command=get_directory_choice, variable=view_int_choice).\
             grid(row=current_rows, column=current_column + index, padx=5, pady=2, sticky=tk.E)
     index += 1
-    if 2 == index:
+    if 3 == index:
         index = 0
         current_rows += 1
 
@@ -302,12 +320,17 @@ ttk.Entry(window, textvariable=view_string_rfc_region, width=12).grid(row=curren
 ttk.Entry(window, textvariable=view_string_rfc_site, width=12).grid(row=current_rows, column=1, sticky=tk.W)
 ttk.Entry(window, textvariable=view_string_rfc_version, width=30).grid(row=current_rows, column=2, sticky=tk.W)
 current_rows += 1
-ttk.Label(window, text='RFC操作类型录入').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
-view_string_rfc_written = tk.StringVar()
-ttk.Entry(window, textvariable=view_string_rfc_written, width=12).grid(row=current_rows, column=1, columnspan=2, sticky=tk.W)
+ttk.Label(window, text='RFC操作--具体产品').grid(row=current_rows, column=1, padx=5, pady=2, sticky=tk.W)
+ttk.Label(window, text='RFC操作--操作类型').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
+ttk.Label(window, text='RFC操作--变更单号').grid(row=current_rows, column=2, padx=5, pady=2, sticky=tk.W)
+current_rows += 1
+view_string_rfc_type, view_string_rfc_product, view_string_rfc_dts = tk.StringVar(), tk.StringVar(), tk.StringVar()
+ttk.Entry(window, textvariable=view_string_rfc_type, width=12).grid(row=current_rows, column=0, sticky=tk.E)
+ttk.Entry(window, textvariable=view_string_rfc_product, width=12).grid(row=current_rows, column=1, sticky=tk.W)
+ttk.Entry(window, textvariable=view_string_rfc_dts, width=30).grid(row=current_rows, column=2, sticky=tk.W)
 current_rows += 1
 ttk.Label(window, text='RFC操作详细描述录入：').grid(row=current_rows, column=0, padx=5, pady=2, sticky=tk.E)
-rfc_info = tk.Text(window, height=5, width=60)
+rfc_info = tk.Text(window, height=7, width=60)
 rfc_info.grid(row=current_rows, column=1, columnspan=2, sticky=tk.W)
 #  text.insert(index,string)  index = x.y的形式,x表示行，y表示列 #
 rfc_info.insert(6.0, """【操作内容】XXXXX
