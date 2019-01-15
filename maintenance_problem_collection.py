@@ -47,8 +47,8 @@ questions_type_directory = [
     ('21 U-Path软终端问题归总', 21),
     ('22 PMSI酒店接口机问题归总', 22),
     ('23 CBS酒管系统问题归总', 23),
+    ('24 维护资料问题', 24),
 ]
-
 
 def get_region():
     return view_string_regin.get()
@@ -106,14 +106,6 @@ def get_directory_choice():
 def write_question_to_excel(write_type):
     global root_path
     creator = creator_chinese[getpass.getuser()]
-    region = get_region()
-    product_name = get_product_name()
-    site = get_site_information()
-    icare = get_icare_number()
-    question = get_questions_description()
-    rtac = get_RTAC_name()
-    question_detail = get_question_detail_info()
-    case_written = get_case_written_description()
     date_time = datetime.datetime.now().strftime('%Y-%m-%d')
     record_excel_file_name = root_path + '\\' + '现网问题记录_录入的时候会自动填写.xls'
     if 'rfc' == write_type:
@@ -139,48 +131,43 @@ def write_question_to_excel(write_type):
             tmp_table.write(nrows, col, write_result_info[col])
         tmp_excel_file.save(record_excel_file_name)
     if 'question' == write_type:
-        pass
-
-    return
-    region = '国内'
-    is_public_flag = '否'
-    question_state = 'OPEN'
-    creator_str = creator_chinese[creator]
-    icare_str = re.search(r'【\d{6,10}】|\d{6,10}', record_question)
-    if icare_str is not None:
-        icare_no = str(icare_str.group()).replace('【','').replace('】','')
-    else:
-        icare_no = ''
-    site_information = record_question.split('】')[0].replace('【', '')
-    if site_information == record_question:
-        site_information = ''
-
-
-    # 打开xls格式的excel文件 #
-    excel_file = xlrd.open_workbook(filename=record_excel_file_name, formatting_info=True)
-    table = excel_file.sheet_by_name('问题录入')
-    # 得到当前行和列，新增数据要从nrow + 1行写入 #
-    nrows = table.nrows
-    ncol = table.ncols
-    write_result_info = [nrows, date_time, product_information, region, site_information, record_question, is_public_flag,
-                         creator_str, is_public_flag, question_state, icare_no, '', '']
-    tmp_excel_file = xlutils.copy.copy(excel_file)
-    tmp_table = tmp_excel_file.get_sheet(0)
-    for col in range(ncol):
-        tmp_table.write(nrows, col, write_result_info[col])
-    tmp_excel_file.save(record_excel_file_name)
+        region = get_region()
+        product_name = get_product_name()
+        site_info = get_site_information()
+        icare_no = get_icare_number()
+        question = get_questions_description()
+        question_detail = get_question_detail_info()
+        if question_detail == '':
+            question_detail = question
+        rtac_name = get_RTAC_name()
+        is_public_flag = '否'
+        question_state = 'OPEN'
+        # 打开xls格式的excel文件 #
+        excel_file = xlrd.open_workbook(filename=record_excel_file_name, formatting_info=True)
+        table = excel_file.sheet_by_name('问题录入')
+        # 得到当前行和列，新增数据要从nrow + 1行写入 #
+        nrows = table.nrows
+        ncol = table.ncols
+        write_result_info = [nrows, date_time, product_name, region, site_info, question_detail, is_public_flag, creator,
+                             is_public_flag, question_state, icare_no, rtac_name, '']
+        tmp_excel_file = xlutils.copy.copy(excel_file)
+        tmp_table = tmp_excel_file.get_sheet('问题录入')
+        for col in range(ncol):
+            tmp_table.write(nrows, col, write_result_info[col])
+        tmp_excel_file.save(record_excel_file_name)
 
 def start_create_and_open():
     global root_path
     creator = getpass.getuser()
     select_path = get_directory_choice()
-    record_question = get_questions_description()
+    site_info = get_site_information()
     case_written = get_case_written_description()
     month_str = datetime.datetime.now().strftime('%Y-%m-%d')
-    is_quit = get_is_quit()
     # month_str = now_time.replace('-', '_')
-    rfc_product = get_rfc_product()
-    if rfc_product is not '':
+    question = get_questions_description()
+    is_quit = get_is_quit()
+    rfc_region = get_rfc_region()
+    if rfc_region is not '':
         write_type = 'rfc'
         write_question_to_excel(write_type)
     if case_written is not '':
@@ -199,8 +186,7 @@ def start_create_and_open():
         error_msg = '\n作者【%s】在【%s】时间写了一个问题案例：%s' % (creator_chinese[creator], month_str, error_msg_path)
         with open('log.txt', 'a') as log_file:
             log_file.write(error_msg)
-    if record_question is not '':
-        site_info = get_site_information()
+    if site_info is not '':
         icare_number = get_icare_number()
         if site_info == '':
             site_info = 'xx'
@@ -208,16 +194,16 @@ def start_create_and_open():
             icare_number = 'xxxxx'
         # eg: 37 现网保障&案例写作&问题记录\09 号码甄别&变换类问题归总\【刘伟】【陕西电信】【SR 1137689】入局呼叫甄别失败问题_xxxxx_2019_xx_xx #
         result_path = root_path + '\\' + select_path + '\\'  + '【' + creator_chinese[creator] + '】' \
-                      + '【' + site_info + '】' + '【' + icare_number + '】' + record_question + '_' + month_str
+                      + '【' + site_info + '】' + '【' + icare_number + '】' + question + '_' + month_str
         print(result_path)
         # create the directory #
-        # TODO os.makedirs(result_path)
+        os.makedirs(result_path)
         # open the directory #
-        # TODO os.startfile(result_path)
+        os.startfile(result_path)
         write_type = 'question'
         write_question_to_excel(write_type)
         error_path_info = select_path + '\\'  + '【' + creator_chinese[creator] + '】' \
-                      + '【' + site_info + '】' + '【' + icare_number + '】' + record_question + '_' + month_str
+                      + '【' + site_info + '】' + '【' + icare_number + '】' + question + '_' + month_str
         error_msg = '\n【%s】在【%s】创建了一个问题文件夹： %s' % (creator_chinese[creator], month_str, error_path_info)
         with open('log.txt', 'a') as log_file:
             log_file.write(error_msg)
