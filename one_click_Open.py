@@ -1,28 +1,15 @@
 import tkinter as tk, os, time, sys
 
-print(sys.getdefaultencoding())
-
-root_path = r'N:\loveNN\2019下半年主要工作'
-nation_question = r'N:\loveNN\2019下半年主要工作\National_Questions国内问题'
-overseas_question = r'N:\loveNN\2019下半年主要工作\Overseas_Question海外问题'
-patch_task = r'N:\loveNN\2019下半年主要工作\paths补丁&需求处理'
-other_common = r'N:\loveNN\2019下半年主要工作\otherThing其他公共事务'
-
-record_question = '问题录入，格式如：【陕西电信】【SR 1137689】入局呼叫甄别失败问题'
+record_question = 'C:\Program Files (x86)\eSpace_Desktop\eSpace.exe'
 
 questions_description, select_path = '', ''
 
-directory_choice = [
-        # (root_path, 0),
-        (nation_question, 0),
-        (overseas_question, 1),
-        (patch_task, 2),
-        (other_common, 3),
-    ]
 
 # document path #
 CPI_document = r'C:\Users\l00382665\Desktop\lovline_nana\HUAWEI UAC3000 接入网关控制器 产品文档-(V100R019C00_01).chm'
 GPI_document = r'C:\Users\l00382665\Desktop\lovline_nana\HUAWEI UAC3000 接入网关控制器 GTS产品文档(GPI)-(V100R018C10_02).chm'
+R011C10_document = r'C:\Users\l00382665\Desktop\lovline_nana\SoftX3000_CPI_disk_R11C10_cn.chm'
+
 
 # execute program path #
 chrome_path = r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
@@ -40,13 +27,15 @@ pycharm_path = r'C:\Program Files\JetBrains\PyCharm 2017.1.5\bin\pycharm64.exe'
 desktop_path = r'C:\Users\l00382665\Desktop'
 lovline_path = r'C:\Users\l00382665\Desktop\lovline_nana'
 work_path = r'N:\loveNN\2019下半年主要工作'
+common_pathDDD = r'N:\CommonPatchDD'
 work_national_path = r'N:\loveNN\2019下半年主要工作\National_Questions国内问题'
 work_patch_path = r'N:\loveNN\2019下半年主要工作\paths补丁&需求处理'
-work_oversea_path = r'N:\loveNN\2019下半年主要工作\Overseas_Question海外问题'
+work_national_path_month = r'N:\loveNN\2019下半年主要工作\National_Questions国内问题\2019年02月 爱卡西亚的暴雨'
 
 open_execute_file_list = [
     CPI_document,
     GPI_document,
+    R011C10_document,
     chrome_path,
     ie_path,
     notepad_path,
@@ -60,10 +49,12 @@ open_execute_file_list = [
     desktop_path,
     lovline_path,
     work_path,
+    common_pathDDD,
     work_national_path,
     work_national_path,
     work_patch_path,
-    work_oversea_path,
+    work_national_path_month,
+    # pycharm_path,
 ]
 
 
